@@ -555,23 +555,17 @@ let koushin_test = koushin eki1 [eki2; eki3] = [
 
 (* 問題 15.4 *)
 
-let saitan_sentinel = {namae = ""; saitan_kyori = infinity; temae_list = []} 
-let rec saitan_eki lst =
-  List.fold_right
-    (fun x y -> if x.saitan_kyori < y.saitan_kyori then x else y)
-    lst
-    saitan_sentinel
-
-(* 目的: eki_t のリストを受け取り、「最短距離最小の駅」と「最短距離最小の駅を除外したリスト」のタプルを返す *)
-let saitan_wo_bunri eki_list =
-  let saitan = saitan_eki eki_list in
-  let saitan_igai = List.filter (fun e -> e.namae != saitan.namae) eki_list in
-  (saitan, saitan_igai)
-
+let rec saitan_wo_bunri lst =
+  let f eki (saitan_eki, v) =
+    if eki.saitan_kyori < saitan_eki.saitan_kyori then (eki, saitan_eki :: v)
+    else (saitan_eki, eki :: v) in
+  match lst with
+  | [] -> ({namae = ""; saitan_kyori = infinity; temae_list = []}, [])
+  | first :: rest ->
+    List.fold_right f rest (first, [])
 
 let eki1 = {namae = "湯島"; saitan_kyori = 1.0; temae_list = ["湯島"; "新御茶ノ水"]}
 let eki2 = {namae = "根津"; saitan_kyori = 0.5; temae_list = ["根津"; "新御茶ノ水"]}
-let eki3 = {namae = "千駄木"; saitan_kyori = 0.75; temae_list = ["千駄木"; "新御茶ノ水"]}    
-let test = saitan_wo_bunri [] = (saitan_sentinel, [])
+let eki3 = {namae = "千駄木"; saitan_kyori = 0.75; temae_list = ["千駄木"; "新御茶ノ水"]}
 let test = saitan_wo_bunri [eki1] = (eki1, [])
-let test = saitan_wo_bunri [eki1; eki2; eki3] = (eki2, [eki1; eki3])
+let test = saitan_wo_bunri [eki1; eki2; eki3] = (eki2, [eki3; eki1])
