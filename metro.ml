@@ -629,3 +629,12 @@ let test = dijkstra_main test_eki_list test_ekikan_list = [
 (* 駅の初期化処理の練習 *)
 let test_eki_list = (shokika "池袋" (make_eki_list (seiretsu global_ekimei_list)))
 let test = List.find (fun {namae} -> namae = "小竹向原") (dijkstra_main test_eki_list global_ekikan_list) = {namae = "小竹向原"; saitan_kyori = 3.2; temae_list = ["小竹向原"; "千川"; "要町"; "池袋"]}
+
+(* 問題 16.5 *)
+let dijkstra shiten_romaji shuten_romaji =
+  let shiten = romaji_to_kanji shiten_romaji global_ekimei_list in
+  let shuten = romaji_to_kanji shuten_romaji global_ekimei_list in
+  let eki_list = (shokika shiten (make_eki_list (seiretsu global_ekimei_list))) in
+  List.find
+    (fun {namae} -> namae = shuten)
+    (dijkstra_main eki_list global_ekikan_list)
