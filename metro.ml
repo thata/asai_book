@@ -426,6 +426,7 @@ let test_make_eki_list = make_eki_list [
 (* 始点の駅を初期化する *)
 (*  - saitan_kyori = 0 *)
 (*  - temae_list = [] *)
+(* shokika : string -> eki_t list -> eki_t list *)
 let rec shokika shiten eki_list =
   match eki_list with
   | [] -> []
@@ -521,9 +522,9 @@ let test_seiretsu3 = seiretsu [
 (* 問題 13.6 *)
 (* 直前に確定した駅 p と未確定の駅 q を受け取り、p と q が直接つながっていたら q の最短距離と手前リストを更新、 *)
 (* つながっていなければ q をそのまま返す *)
-(* koushin1 : eki_t -> eki_t -> eki_t *)
-let koushin1 p q =
-  let ekikan_kyori = get_ekikan_kyori p.namae q.namae global_ekikan_list in
+(* koushin1 : eki_t -> eki_t -> ekikan_t list -> eki_t *)
+let koushin1 p q ekikan_list =
+  let ekikan_kyori = get_ekikan_kyori p.namae q.namae ekikan_list in
   if ekikan_kyori = infinity then q
   else {namae = q.namae; saitan_kyori = p.saitan_kyori +. ekikan_kyori; temae_list = q.namae :: p.temae_list}
 
@@ -532,23 +533,23 @@ let eki1 = {namae = "湯島"; saitan_kyori = 0.0; temae_list = ["湯島"]}
 let eki2 = {namae = "根津"; saitan_kyori = infinity; temae_list = []}
 let eki3 = {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
 
-let koushin1_test = koushin1 eki1 eki2 = {namae = "根津"; saitan_kyori = 1.2; temae_list = ["根津"; "湯島"]}
-let koushin1_test = koushin1 eki1 eki3 = {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
-let eki2_1 = koushin1 eki1 eki2
-let koushin1_test = koushin1 eki2_1 eki3 = {namae = "千駄木"; saitan_kyori = 2.2; temae_list = ["千駄木"; "根津"; "湯島"]}
+let koushin1_test = koushin1 eki1 eki2 global_ekikan_list = {namae = "根津"; saitan_kyori = 1.2; temae_list = ["根津"; "湯島"]}
+let koushin1_test = koushin1 eki1 eki3 global_ekikan_list = {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
+let eki2_1 = koushin1 eki1 eki2 global_ekikan_list
+let koushin1_test = koushin1 eki2_1 eki3 global_ekikan_list = {namae = "千駄木"; saitan_kyori = 2.2; temae_list = ["千駄木"; "根津"; "湯島"]}
 
 
 (* 問題 13.7 *)
 (* 目的: 直前に確定した駅 p と未確定の駅リスト v を受け取り、必要な更新処理を行った未確定の駅のリストを返す *)
-let koushin p v =
-  let f eki = koushin1 p eki in
+let koushin p v ekikan_list =
+  let f eki = koushin1 p eki ekikan_list in
   List.map f v
 
 let eki1 = {namae = "湯島"; saitan_kyori = 0.0; temae_list = ["湯島"]}
 let eki2 = {namae = "根津"; saitan_kyori = infinity; temae_list = []}
 let eki3 = {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
 
-let koushin_test = koushin eki1 [eki2; eki3] = [
+let koushin_test = koushin eki1 [eki2; eki3] global_ekikan_list = [
   {namae = "根津"; saitan_kyori = 1.2; temae_list = ["根津"; "湯島"]};
   {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
 ]
@@ -569,3 +570,62 @@ let eki2 = {namae = "根津"; saitan_kyori = 0.5; temae_list = ["根津"; "新�
 let eki3 = {namae = "千駄木"; saitan_kyori = 0.75; temae_list = ["千駄木"; "新御茶ノ水"]}
 let test = saitan_wo_bunri [eki1] = (eki1, [])
 let test = saitan_wo_bunri [eki1; eki2; eki3] = (eki2, [eki3; eki1])
+
+
+(* 問題 16.4 *)
+
+(*
+- global_ekimei_list : ekimei_t list
+- global_ekikan_list : ekikan_t list
+- make_eki_list : ekimei_t list ->eki_t list
+- shokika : string -> eki_t list -> eki_t list
+- seiretsu : ekimei_t list -> ekimei_t list
+koushin : eki_t -> eki_t list -> ekikan_t list -> eki_t list
+saitan_wo_bunri : eki_t list -> eki_t * eki_t list
+*)
+
+(* dijkstra_main : eki_t list -> ekikan_t list -> eki_t list *)
+let rec dijkstra_main eki_list ekikan_list =
+  let rec dijkstra0 s v ekikan_list =
+    match v with
+    [] -> s
+  | _ ->
+    let (saitan, v0) = saitan_wo_bunri v in
+    dijkstra0 (saitan :: s) (koushin saitan v0 ekikan_list) ekikan_list
+  in dijkstra0 [] eki_list ekikan_list
+
+let test_ekikan_list = [
+  {kiten="A"; shuten="B"; keiyu="AA"; kyori=1.0; jikan=5};
+  {kiten="B"; shuten="C"; keiyu="AA"; kyori=1.3; jikan=7};
+  {kiten="C"; shuten="D"; keiyu="AA"; kyori=0.8; jikan=3}
+]
+
+(* 始点しかない場合 *)
+let test_eki_list = [{namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}]
+let test = dijkstra_main test_eki_list test_ekikan_list = [{namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}]
+
+(* A -> B *)
+let test_eki_list = [
+  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]};
+  {namae = "B"; saitan_kyori = infinity; temae_list = []}
+]
+let test = dijkstra_main test_eki_list test_ekikan_list = [
+  {namae = "B"; saitan_kyori = 1.0; temae_list = ["B"; "A"]};
+  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}
+]
+
+(* A -> B -> C *)
+let test_eki_list = [
+  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]};
+  {namae = "B"; saitan_kyori = infinity; temae_list = []};
+  {namae = "C"; saitan_kyori = infinity; temae_list = []}
+]
+let test = dijkstra_main test_eki_list test_ekikan_list = [
+  {namae = "C"; saitan_kyori = 2.3; temae_list = ["C"; "B"; "A"]};
+  {namae = "B"; saitan_kyori = 1.0; temae_list = ["B"; "A"]};
+  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}
+]
+
+(* 駅の初期化処理の練習 *)
+let test_eki_list = (shokika "池袋" (make_eki_list (seiretsu global_ekimei_list)))
+let test = List.find (fun {namae} -> namae = "小竹向原") (dijkstra_main test_eki_list global_ekikan_list) = {namae = "小竹向原"; saitan_kyori = 3.2; temae_list = ["小竹向原"; "千川"; "要町"; "池袋"]}
