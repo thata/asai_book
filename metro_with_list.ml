@@ -362,8 +362,6 @@ let rec romaji_to_kanji _romaji lst =
     ->
       if romaji = _romaji then kanji
       else romaji_to_kanji _romaji rest
-let test = romaji_to_kanji "heiwadai" global_ekimei_list = "平和台"
-let test = romaji_to_kanji "foo" global_ekimei_list = ""
 
 (* 指定した駅間の距離を返す *)
 let rec get_ekikan_kyori _kiten _shuten lst =
@@ -374,10 +372,6 @@ let rec get_ekikan_kyori _kiten _shuten lst =
       if (kiten = _kiten && shuten = _shuten) || (kiten = _shuten && shuten = _kiten) then kyori
       else get_ekikan_kyori _kiten _shuten rest
 
-let test = get_ekikan_kyori "駒込" "西ヶ原" global_ekikan_list = 1.4
-let test = get_ekikan_kyori "西ヶ原" "駒込" global_ekikan_list = 1.4
-let test = get_ekikan_kyori "西ヶ原" "駒込" [] = infinity
-
 (* ローマ字の駅名ふたつを受け取って距離を表示 *)
 let rec kyori_wo_hyoji kiten_romaji shuten_romaji =
   let kiten_kanji = romaji_to_kanji kiten_romaji global_ekimei_list in
@@ -387,12 +381,6 @@ let rec kyori_wo_hyoji kiten_romaji shuten_romaji =
   else if shuten_kanji = "" then shuten_romaji ^ "という駅は存在しません"
   else if ekikan_kyori = infinity then kiten_kanji ^ "駅と" ^ shuten_kanji ^ "駅はつながっていません"
   else kiten_kanji ^ "駅から" ^ shuten_kanji ^ "駅までは" ^ string_of_float(ekikan_kyori) ^ "kmです"
-
-let test = kyori_wo_hyoji "ayase" "kitaayase" = "綾瀬駅から北綾瀬駅までは2.1kmです"
-let test = kyori_wo_hyoji "hiro" "ebisu" = "広尾駅から恵比寿駅までは1.5kmです"
-let test = kyori_wo_hyoji "heiwadai" "nameko" = "namekoという駅は存在しません"
-let test = kyori_wo_hyoji "tarako" "heiwadai" = "tarakoという駅は存在しません"
-let test = kyori_wo_hyoji "wakousi" "hibiya" = "和光市駅と日比谷駅はつながっていません"
 
 (* 問題 12.2 *)
 
@@ -405,22 +393,6 @@ let rec make_eki_list ekimei_list =
   | {kanji; kana; romaji; shozoku} :: rest
     -> [{namae=kanji; saitan_kyori=infinity; temae_list=[]}] @ (make_eki_list rest)
 
-let test_make_eki_list = make_eki_list [] = []
-let test_make_eki_list = make_eki_list [
-  {kanji="代々木上原"; kana="よよぎうえはら"; romaji="yoyogiuehara"; shozoku="千代田線"}
-] = [
-  {namae="代々木上原"; saitan_kyori=infinity; temae_list=[]}
-]
-
-let test_make_eki_list = make_eki_list [
-  {kanji="代々木上原"; kana="よよぎうえはら"; romaji="yoyogiuehara"; shozoku="千代田線"};
-  {kanji="代々木公園"; kana="よよぎこうえん"; romaji="yoyogikouen"; shozoku="千代田線"};
-  {kanji="明治神宮前"; kana="めいじじんぐうまえ"; romaji="meijijinguumae"; shozoku="千代田線"}
-] = [
-  {namae="代々木上原"; saitan_kyori=infinity; temae_list=[]};
-  {namae="代々木公園"; saitan_kyori=infinity; temae_list=[]};
-  {namae="明治神宮前"; saitan_kyori=infinity; temae_list=[]}
-]
 
 (* 問題 12.3 *)
 (* 始点の駅を初期化する *)
@@ -435,16 +407,6 @@ let rec shokika shiten eki_list =
       if namae = shiten then [{namae=namae; saitan_kyori=0.0; temae_list=[shiten]}] @ rest
       else [first] @ shokika shiten rest
 
-let test_eki_list = make_eki_list [
-  {kanji="代々木上原"; kana="よよぎうえはら"; romaji="yoyogiuehara"; shozoku="千代田線"};
-  {kanji="代々木公園"; kana="よよぎこうえん"; romaji="yoyogikouen"; shozoku="千代田線"};
-  {kanji="明治神宮前"; kana="めいじじんぐうまえ"; romaji="meijijinguumae"; shozoku="千代田線"}
-]
-let test_shokika = shokika "明治神宮前" [] = []
-let test_shokika = shokika "明治神宮前" test_eki_list
-let test_shokika = shokika "foo" test_eki_list
-let test_shokika = shokika "代々木上原" test_eki_list
-
 (* 問題 12.4 *)
 
 (* ひらがなでソート済みの ekimei_t のリストに、昇順となるよう ekimei_t を挿入する *)
@@ -456,13 +418,6 @@ let rec insert_ekimei lst ekimei =
       if ekimei.kana < first.kana then ekimei :: first :: rest
       else first :: (insert_ekimei rest ekimei)
 
-let ikebukuro1 = {kanji="池袋";kana="いけぶくろ";romaji="ikebukuro";shozoku="丸ノ内線"}
-let ikebukuro2 = {kanji="池袋";kana="いけぶくろ";romaji="ikebukuro";shozoku="有楽町線"}
-let higashi_ikebukuro = {kanji="東池袋"; kana="ひがしいけぶくろ"; romaji="higasiikebukuro"; shozoku="有楽町線"}
-let kanamecho = {kanji="要町"; kana="かなめちょう"; romaji="kanametyou"; shozoku="有楽町線"}
-
-let test_insert_ekimei = insert_ekimei [] ikebukuro1 = [ikebukuro1]
-let test_insert_ekimei = insert_ekimei [ikebukuro1; higashi_ikebukuro] kanamecho = [ikebukuro1; kanamecho; higashi_ikebukuro]
 
 (* 重複する駅名を取り除く *)
 let rec uniq_ekimei_list ekimei_list =
@@ -473,16 +428,6 @@ let rec uniq_ekimei_list ekimei_list =
     if first.kana = second.kana then uniq_ekimei_list (first :: rest)
     else first :: uniq_ekimei_list (second :: rest)
 
-let test_uniq_ekimei_list = uniq_ekimei_list [
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="丸ノ内線"};
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="有楽町線"};
-  {kanji="後楽園"; kana="こうらくえん"; romaji="korakuen"; shozoku="丸ノ内線"};
-  {kanji="茗荷谷"; kana="みょうがだに"; romaji="myogadani"; shozoku="丸ノ内線"}
-] = [
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="丸ノ内線"};
-  {kanji="後楽園"; kana="こうらくえん"; romaji="korakuen"; shozoku="丸ノ内線"};
-  {kanji="茗荷谷"; kana="みょうがだに"; romaji="myogadani"; shozoku="丸ノ内線"}
-]
 
 (* ekimei_t のリストをひらがな(kana)順に整列して、さらに駅の重複を取り除く *)
 let rec seiretsu ekimei_list =
@@ -491,33 +436,6 @@ let rec seiretsu ekimei_list =
   | first :: rest ->
     uniq_ekimei_list (insert_ekimei (seiretsu rest) first)
 
-let ekimei_list = [
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="丸ノ内線"};
-  {kanji="茗荷谷"; kana="みょうがだに"; romaji="myogadani"; shozoku="丸ノ内線"};
-  {kanji="後楽園"; kana="こうらくえん"; romaji="korakuen"; shozoku="丸ノ内線"};
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="有楽町線"}
-]
-
-let test_seiretsu1 = seiretsu [] = []
-let test_seiretsu2 = seiretsu [
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="丸ノ内線"};
-  {kanji="茗荷谷"; kana="みょうがだに"; romaji="myogadani"; shozoku="丸ノ内線"};
-  {kanji="後楽園"; kana="こうらくえん"; romaji="korakuen"; shozoku="丸ノ内線"}
-] = [
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="丸ノ内線"};
-  {kanji="後楽園"; kana="こうらくえん"; romaji="korakuen"; shozoku="丸ノ内線"};
-  {kanji="茗荷谷"; kana="みょうがだに"; romaji="myogadani"; shozoku="丸ノ内線"}
-]
-let test_seiretsu3 = seiretsu [
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="丸ノ内線"};
-  {kanji="茗荷谷"; kana="みょうがだに"; romaji="myogadani"; shozoku="丸ノ内線"};
-  {kanji="後楽園"; kana="こうらくえん"; romaji="korakuen"; shozoku="丸ノ内線"};
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="有楽町線"}
-] = [
-  {kanji="池袋"; kana="いけぶくろ"; romaji="ikebukuro"; shozoku="有楽町線"};
-  {kanji="後楽園"; kana="こうらくえん"; romaji="korakuen"; shozoku="丸ノ内線"};
-  {kanji="茗荷谷"; kana="みょうがだに"; romaji="myogadani"; shozoku="丸ノ内線"}
-]
 
 (* 問題 13.6 *)
 (* 直前に確定した駅 p と未確定の駅 q を受け取り、p と q が直接つながっていたら q の最短距離と手前リストを更新、 *)
@@ -528,16 +446,6 @@ let koushin1 p q ekikan_list =
   if ekikan_kyori = infinity then q
   else {namae = q.namae; saitan_kyori = p.saitan_kyori +. ekikan_kyori; temae_list = q.namae :: p.temae_list}
 
-(* 湯島 -1.2-> 根津 -1.0-> 千駄木 *)
-let eki1 = {namae = "湯島"; saitan_kyori = 0.0; temae_list = ["湯島"]}
-let eki2 = {namae = "根津"; saitan_kyori = infinity; temae_list = []}
-let eki3 = {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
-
-let koushin1_test = koushin1 eki1 eki2 global_ekikan_list = {namae = "根津"; saitan_kyori = 1.2; temae_list = ["根津"; "湯島"]}
-let koushin1_test = koushin1 eki1 eki3 global_ekikan_list = {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
-let eki2_1 = koushin1 eki1 eki2 global_ekikan_list
-let koushin1_test = koushin1 eki2_1 eki3 global_ekikan_list = {namae = "千駄木"; saitan_kyori = 2.2; temae_list = ["千駄木"; "根津"; "湯島"]}
-
 
 (* 問題 13.7 *)
 (* 目的: 直前に確定した駅 p と未確定の駅リスト v を受け取り、必要な更新処理を行った未確定の駅のリストを返す *)
@@ -545,14 +453,6 @@ let koushin p v ekikan_list =
   let f eki = koushin1 p eki ekikan_list in
   List.map f v
 
-let eki1 = {namae = "湯島"; saitan_kyori = 0.0; temae_list = ["湯島"]}
-let eki2 = {namae = "根津"; saitan_kyori = infinity; temae_list = []}
-let eki3 = {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
-
-let koushin_test = koushin eki1 [eki2; eki3] global_ekikan_list = [
-  {namae = "根津"; saitan_kyori = 1.2; temae_list = ["根津"; "湯島"]};
-  {namae = "千駄木"; saitan_kyori = infinity; temae_list = []}
-]
 
 (* 問題 15.4 *)
 
@@ -565,24 +465,8 @@ let rec saitan_wo_bunri lst =
   | first :: rest ->
     List.fold_right f rest (first, [])
 
-let eki1 = {namae = "湯島"; saitan_kyori = 1.0; temae_list = ["湯島"; "新御茶ノ水"]}
-let eki2 = {namae = "根津"; saitan_kyori = 0.5; temae_list = ["根津"; "新御茶ノ水"]}
-let eki3 = {namae = "千駄木"; saitan_kyori = 0.75; temae_list = ["千駄木"; "新御茶ノ水"]}
-let test = saitan_wo_bunri [eki1] = (eki1, [])
-let test = saitan_wo_bunri [eki1; eki2; eki3] = (eki2, [eki3; eki1])
-
 
 (* 問題 16.4 *)
-
-(*
-- global_ekimei_list : ekimei_t list
-- global_ekikan_list : ekikan_t list
-- make_eki_list : ekimei_t list ->eki_t list
-- shokika : string -> eki_t list -> eki_t list
-- seiretsu : ekimei_t list -> ekimei_t list
-koushin : eki_t -> eki_t list -> ekikan_t list -> eki_t list
-saitan_wo_bunri : eki_t list -> eki_t * eki_t list
-*)
 
 (* dijkstra_main : eki_t list -> ekikan_t list -> eki_t list *)
 let rec dijkstra_main eki_list ekikan_list =
@@ -594,41 +478,6 @@ let rec dijkstra_main eki_list ekikan_list =
     dijkstra0 (saitan :: s) (koushin saitan v0 ekikan_list) ekikan_list
   in dijkstra0 [] eki_list ekikan_list
 
-let test_ekikan_list = [
-  {kiten="A"; shuten="B"; keiyu="AA"; kyori=1.0; jikan=5};
-  {kiten="B"; shuten="C"; keiyu="AA"; kyori=1.3; jikan=7};
-  {kiten="C"; shuten="D"; keiyu="AA"; kyori=0.8; jikan=3}
-]
-
-(* 始点しかない場合 *)
-let test_eki_list = [{namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}]
-let test = dijkstra_main test_eki_list test_ekikan_list = [{namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}]
-
-(* A -> B *)
-let test_eki_list = [
-  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]};
-  {namae = "B"; saitan_kyori = infinity; temae_list = []}
-]
-let test = dijkstra_main test_eki_list test_ekikan_list = [
-  {namae = "B"; saitan_kyori = 1.0; temae_list = ["B"; "A"]};
-  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}
-]
-
-(* A -> B -> C *)
-let test_eki_list = [
-  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]};
-  {namae = "B"; saitan_kyori = infinity; temae_list = []};
-  {namae = "C"; saitan_kyori = infinity; temae_list = []}
-]
-let test = dijkstra_main test_eki_list test_ekikan_list = [
-  {namae = "C"; saitan_kyori = 2.3; temae_list = ["C"; "B"; "A"]};
-  {namae = "B"; saitan_kyori = 1.0; temae_list = ["B"; "A"]};
-  {namae = "A"; saitan_kyori = 0.0; temae_list = ["A"]}
-]
-
-(* 駅の初期化処理の練習 *)
-let test_eki_list = (shokika "池袋" (make_eki_list (seiretsu global_ekimei_list)))
-let test = List.find (fun {namae} -> namae = "小竹向原") (dijkstra_main test_eki_list global_ekikan_list) = {namae = "小竹向原"; saitan_kyori = 3.2; temae_list = ["小竹向原"; "千川"; "要町"; "池袋"]}
 
 (* 問題 16.5 *)
 let dijkstra shiten_romaji shuten_romaji =
@@ -639,74 +488,9 @@ let dijkstra shiten_romaji shuten_romaji =
     (fun {namae} -> namae = shuten)
     (dijkstra_main eki_list global_ekikan_list)
 
-
 let () =
-  let {namae; saitan_kyori; temae_list} = dijkstra "ikebukuro" "awajicho"
+  let {namae; saitan_kyori; temae_list} = dijkstra "ikebukuro" "shinotsuka"
   in
   print_string namae;
   print_float saitan_kyori;
   List.iter (print_string) temae_list
-
-(* 問題 17.10 *)
-
-type ekikan_tree_t =
-    Empty
-  | Node of ekikan_tree_t * string * (string * float) list * ekikan_tree_t
-
-  let tree1 = Node (Empty, "根津", [("湯島", 1.2); ("千駄木", 1.0)], Empty)
-
-(* 問題 17.11 *)
-
-(* 目的: 連想リストに格納された距離を取得する *)
-let rec assoc key pairs =
-  match pairs with
-      [] -> infinity
-    | (key0, value0) :: rest ->
-        if key = key0 then value0
-        else assoc key rest
-
-let test = assoc "湯島" [("湯島", 1.2); ("千駄木", 1.0)] = 1.2
-let test = assoc "池袋" [("湯島", 1.2); ("千駄木", 1.0)] = infinity
-
-
-(* 問題 17.12 *)
-(* 目的: ekikan_tree_t に ekikan_t を挿入する *)
-let insert_ekikan ekikan_tree ekikan =
-  let rec insert_ekikan0 ekikan_tree kiten shuten kyori =
-    match ekikan_tree with
-        Empty -> Node (Empty, kiten, [(shuten, kyori)], Empty)
-      | Node (t1, ekimei, ekimei_kyori_pairs, t2) ->
-          if kiten = ekimei then Node (t1, ekimei, ((shuten, kyori) :: ekimei_kyori_pairs), t1)
-          else if kiten < ekimei then Node ((insert_ekikan0 t1 kiten shuten kyori), ekimei, ekimei_kyori_pairs, t2)
-          else  Node (t1, ekimei, ekimei_kyori_pairs, (insert_ekikan0 t2 kiten shuten kyori))
-  in
-  insert_ekikan0
-    (insert_ekikan0 ekikan_tree ekikan.kiten ekikan.shuten ekikan.kyori)
-    ekikan.shuten ekikan.kiten ekikan.kyori
-
-(* 千駄木 < 根津 < 湯島 < 町屋 < 西日暮里 *)
-let ekikan1 = {kiten="湯島"; shuten="根津"; keiyu="千代田線"; kyori=1.2; jikan=2}
-let ekikan2 = {kiten="根津"; shuten="千駄木"; keiyu="千代田線"; kyori=1.0; jikan=2}
-let ekikan3 = {kiten="千駄木"; shuten="西日暮里"; keiyu="千代田線"; kyori=0.9; jikan=1}
-let ekikan4 = {kiten="西日暮里"; shuten="町屋"; keiyu="千代田線"; kyori=1.7; jikan=2}
-
-let tree1 = insert_ekikan Empty ekikan1
-let test = tree1 = Node (Node(Empty, "根津", [("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Empty)
-let tree2 = insert_ekikan tree1 ekikan2
-let test = tree2 = Node (Node (Node (Empty, "千駄木", [("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Empty)
-let tree3 = insert_ekikan tree2 ekikan3
-let test = tree3 = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Empty, "西日暮里", [("千駄木", 0.9)], Empty))
-let tree4 = insert_ekikan tree3 ekikan4
-let test = tree4 = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Node (Empty, "町屋", [("西日暮里", 1.7)], Empty), "西日暮里", [("町屋", 1.7); ("千駄木", 0.9)], Empty))
-
-
-(* 問題 17.13 *)
-
-(* 目的: ekikan_tree_t に ekikan_t list を挿入する *)
-let inserts_ekikan ekikan_tree ekikan_list =
-  List.fold_right (fun ekikan tree-> insert_ekikan tree ekikan) ekikan_list ekikan_tree
-
-let test = inserts_ekikan Empty [] = Empty
-let test = inserts_ekikan Empty [ekikan1] = Node (Node(Empty, "根津", [("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Empty)
-let test = inserts_ekikan Empty [ekikan2; ekikan1] = Node (Node (Node (Empty, "千駄木", [("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Empty)
-let test = inserts_ekikan Empty [ekikan4; ekikan3; ekikan2; ekikan1] = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Node (Empty, "町屋", [("西日暮里", 1.7)], Empty), "西日暮里", [("町屋", 1.7); ("千駄木", 0.9)], Empty))
