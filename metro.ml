@@ -670,33 +670,31 @@ let test = assoc "池袋" [("湯島", 1.2); ("千駄木", 1.0)] = infinity
 
 
 (* 問題 17.12 *)
+
 (* 目的: ekikan_tree_t に ekikan_t を挿入する *)
 let insert_ekikan ekikan_tree ekikan =
-  let rec insert_ekikan0 ekikan_tree kiten shuten kyori =
-    match ekikan_tree with
+  let rec insert_ekikan0 tree kiten0 shuten0 kyori0 =
+    match tree with
         Empty ->
-          let _ = Printf.printf "%s created !!\n" kiten in
-          Node (Empty, kiten, [(shuten, kyori)], Empty)
+          Node (Empty, kiten0, [(shuten0, kyori0)], Empty)
       | Node (t1, ekimei, ekimei_kyori_pairs, t2) ->
-          if kiten = ekimei then
-            (* let _ = Printf.printf "%s == %s\n" kiten ekimei in *)
-            Node (t1, ekimei, ((shuten, kyori) :: ekimei_kyori_pairs), t1)
-          else if kiten < ekimei then
-            (* let _ = Printf.printf "%s < %s\n" kiten ekimei in *)
-            Node ((insert_ekikan0 t1 kiten shuten kyori), ekimei, ekimei_kyori_pairs, t2)
+          if kiten0 = ekimei then
+            Node (t1, ekimei, ((shuten0, kyori0) :: ekimei_kyori_pairs), t2)
+          else if kiten0 < ekimei then
+            Node ((insert_ekikan0 t1 kiten0 shuten0 kyori0), ekimei, ekimei_kyori_pairs, t2)
           else
-            (* let _ = Printf.printf "%s > %s\n" kiten ekimei in *)
-            Node (t1, ekimei, ekimei_kyori_pairs, (insert_ekikan0 t2 kiten shuten kyori))
-  in
-  insert_ekikan0
-    (insert_ekikan0 ekikan_tree ekikan.kiten ekikan.shuten ekikan.kyori)
-    ekikan.shuten ekikan.kiten ekikan.kyori
+            Node (t1, ekimei, ekimei_kyori_pairs, (insert_ekikan0 t2 kiten0 shuten0 kyori0)) in
+  let t = insert_ekikan0 ekikan_tree ekikan.kiten ekikan.shuten ekikan.kyori in
+  insert_ekikan0 t ekikan.shuten ekikan.kiten ekikan.kyori
 
-(* 千駄木 < 根津 < 湯島 < 町屋 < 西日暮里 *)
+
+(* 千駄木 < 本駒込 < 根津 < 湯島 < 町屋 < 西日暮里 < 駒込 *)
 let ekikan1 = {kiten="湯島"; shuten="根津"; keiyu="千代田線"; kyori=1.2; jikan=2}
 let ekikan2 = {kiten="根津"; shuten="千駄木"; keiyu="千代田線"; kyori=1.0; jikan=2}
 let ekikan3 = {kiten="千駄木"; shuten="西日暮里"; keiyu="千代田線"; kyori=0.9; jikan=1}
 let ekikan4 = {kiten="西日暮里"; shuten="町屋"; keiyu="千代田線"; kyori=1.7; jikan=2}
+let ekikan5 = {kiten="本駒込"; shuten="駒込"; keiyu="南北線"; kyori=1.4; jikan=2}
+
 
 let tree1 = insert_ekikan Empty ekikan1
 let test = tree1 = Node (Node(Empty, "根津", [("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Empty)
@@ -706,6 +704,14 @@ let tree3 = insert_ekikan tree2 ekikan3
 let test = tree3 = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Empty, "西日暮里", [("千駄木", 0.9)], Empty))
 let tree4 = insert_ekikan tree3 ekikan4
 let test = tree4 = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Node (Empty, "町屋", [("西日暮里", 1.7)], Empty), "西日暮里", [("町屋", 1.7); ("千駄木", 0.9)], Empty))
+let tree5 = insert_ekikan tree4 ekikan5
+let test = tree5 = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Node (Empty, "本駒込", [("駒込", 1.4)], Empty)), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Node (Empty, "町屋", [("西日暮里", 1.7)], Empty), "西日暮里", [("町屋", 1.7); ("千駄木", 0.9)], Node (Empty, "駒込", [("本駒込", 1.4)], Empty)))
+
+(* これがおかしい！！！！ *)
+let ekikan_a = {kiten="A"; shuten="B"; keiyu="有楽町線"; kyori=2.1; jikan=3}
+let ekikan_b = {kiten="C"; shuten="A"; keiyu="有楽町線"; kyori=1.5; jikan=2}
+let tree_a = insert_ekikan Empty ekikan_a
+let tree_b = insert_ekikan tree_a ekikan_b
 
 
 (* 問題 17.13 *)
@@ -717,21 +723,23 @@ let inserts_ekikan ekikan_tree ekikan_list =
 let test = inserts_ekikan Empty [] = Empty
 let test = inserts_ekikan Empty [ekikan1] = Node (Node(Empty, "根津", [("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Empty)
 let test = inserts_ekikan Empty [ekikan2; ekikan1] = Node (Node (Node (Empty, "千駄木", [("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Empty)
-let test = inserts_ekikan Empty [ekikan4; ekikan3; ekikan2; ekikan1] = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Empty), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Node (Empty, "町屋", [("西日暮里", 1.7)], Empty), "西日暮里", [("町屋", 1.7); ("千駄木", 0.9)], Empty))
+let test = inserts_ekikan Empty [ekikan5; ekikan4; ekikan3; ekikan2; ekikan1] = Node (Node (Node (Empty, "千駄木", [("西日暮里", 0.9); ("根津", 1.0)], Node (Empty, "本駒込", [("駒込", 1.4)], Empty)), "根津", [("千駄木", 1.0); ("湯島", 1.2)], Empty), "湯島", [("根津", 1.2)], Node (Node (Empty, "町屋", [("西日暮里", 1.7)], Empty), "西日暮里", [("町屋", 1.7); ("千駄木", 0.9)], Node (Empty, "駒込", [("本駒込", 1.4)], Empty)))
 
 
 let rec get_ekikan_node tree ekimei =
+  let get_ekimei tree =
+    match tree with
+        Empty -> "Empty"
+      | Node (_, e0, _, _) -> e0 in
   match tree with
-      Empty -> None
+      Empty ->
+        None
     | Node (t1, ekimei0, ekimei_kyori_pairs, t2) ->
         if ekimei = ekimei0 then
-          (* let _ = Printf.printf "%s == %s\n" ekimei ekimei0 in *)
-          Some (Node (Empty, ekimei0, ekimei_kyori_pairs, Empty))
+          Some (Node (Node (Empty, (get_ekimei t1), [], Empty), ekimei0, ekimei_kyori_pairs, Node (Empty, (get_ekimei t2), [], Empty)))
         else if ekimei < ekimei0 then
-          (* let _ = Printf.printf "%s < %s\n" ekimei ekimei0 in *)
           get_ekikan_node t1 ekimei
         else
-          (* let _ = Printf.printf "%s > %s\n" ekimei ekimei0 in *)
           get_ekikan_node t2 ekimei
 
 
