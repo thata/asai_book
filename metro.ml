@@ -635,9 +635,9 @@ let test_seiretsu3 = seiretsu [
 (* 問題 13.6 *)
 (* 直前に確定した駅 p と未確定の駅 q を受け取り、p と q が直接つながっていたら q の最短距離と手前リストを更新、 *)
 (* つながっていなければ q をそのまま返す *)
-(* koushin1 : eki_t -> eki_t -> ekikan_t list -> eki_t *)
-let koushin1 p q ekikan_list =
-  let ekikan_kyori = get_ekikan_kyori p.namae q.namae ekikan_list in
+(* koushin1 : eki_t -> eki_t -> ekikan_tree_t -> eki_t *)
+let koushin1 p q ekikan_tree =
+  let ekikan_kyori = get_ekikan_kyori p.namae q.namae ekikan_tree in
   if ekikan_kyori = infinity then q
   else {namae = q.namae; saitan_kyori = p.saitan_kyori +. ekikan_kyori; temae_list = q.namae :: p.temae_list}
 
@@ -654,8 +654,8 @@ let koushin1_test = koushin1 eki2_1 eki3 (inserts_ekikan Empty global_ekikan_lis
 
 (* 問題 13.7 *)
 (* 目的: 直前に確定した駅 p と未確定の駅リスト v を受け取り、必要な更新処理を行った未確定の駅のリストを返す *)
-let koushin p v ekikan_list =
-  let f eki = koushin1 p eki ekikan_list in
+let koushin p v ekikan_tree =
+  let f eki = koushin1 p eki ekikan_tree in
   List.map f v
 
 let eki1 = {namae = "湯島"; saitan_kyori = 0.0; temae_list = ["湯島"]}
@@ -697,15 +697,15 @@ koushin : eki_t -> eki_t list -> ekikan_t list -> eki_t list
 saitan_wo_bunri : eki_t list -> eki_t * eki_t list
 *)
 
-(* dijkstra_main : eki_t list -> ekikan_t list -> eki_t list *)
-let rec dijkstra_main eki_list ekikan_list =
-  let rec dijkstra0 s v ekikan_list =
+(* dijkstra_main : eki_t list -> ekikan_tree_t -> eki_t list *)
+let rec dijkstra_main eki_list ekikan_tree =
+  let rec dijkstra0 s v ekikan_tree =
     match v with
     [] -> s
   | _ ->
     let (saitan, v0) = saitan_wo_bunri v in
-    dijkstra0 (saitan :: s) (koushin saitan v0 ekikan_list) ekikan_list
-  in dijkstra0 [] eki_list ekikan_list
+    dijkstra0 (saitan :: s) (koushin saitan v0 ekikan_tree) ekikan_tree
+  in dijkstra0 [] eki_list ekikan_tree
 
 let test_ekikan_list = [
   {kiten="A"; shuten="B"; keiyu="AA"; kyori=1.0; jikan=5};
